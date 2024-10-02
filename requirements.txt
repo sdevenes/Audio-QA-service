@@ -1,0 +1,11 @@
+common-code[test] @ git+https://github.com/swiss-ai-center/common-code.git@main
+numpy==1.26.4
+transformers
+#torch==2.2.2
+whisper_timestamped
+langchain_community
+langchain_huggingface
+langchainhub
+#ffmpeg
+jq
+chromadb==0.5.4
