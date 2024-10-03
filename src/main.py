@@ -32,9 +32,8 @@ from langchain.chains import RetrievalQA
 from langchain_huggingface import HuggingFacePipeline
 from langchain import hub
 
-
 settings = get_settings()
-#classifier = pipeline("summarization", model="philschmid/bart-large-cnn-samsum")
+# classifier = pipeline("summarization", model="philschmid/bart-large-cnn-samsum")
 
 
 class MyService(Service):
@@ -71,7 +70,7 @@ class MyService(Service):
                 ),
             ],
             has_ai=True,
-            docs_url="https://docs.swiss-ai-center.ch/reference/core-concepts/service/", 
+            docs_url="https://docs.swiss-ai-center.ch/reference/core-concepts/service/",
         )
         self._logger = get_logger(settings)
 
@@ -79,7 +78,7 @@ class MyService(Service):
         local_path_tokenizer = "../models/Phi-3-mini-4k-instruct_tokenizer"
 
         emb_name = "BAAI/bge-base-en"
-        #emb_name = "BAAI/bge-large-en-v1.5"
+        # emb_name = "BAAI/bge-large-en-v1.5"
         print("Loading embedding model..")
         self._embedding_model = HuggingFaceBgeEmbeddings(
             model_name=emb_name,
@@ -89,9 +88,8 @@ class MyService(Service):
         print("Loading phi3 model..")
         self._model = AutoModelForCausalLM.from_pretrained(local_path, local_files_only=True)
         print("Loading tokenizer..")
-        self._tokenizer = AutoTokenizer.from_pretrained(local_path_tokenizer, local_files_only=True) 
+        self._tokenizer = AutoTokenizer.from_pretrained(local_path_tokenizer, local_files_only=True)
         print(" -> Done")
-
 
     # TODO: 5. CHANGE THE PROCESS METHOD (CORE OF THE SERVICE)
     def process(self, data):
@@ -118,7 +116,7 @@ class MyService(Service):
         # Run the model
         # To download a whisper model locally:
         # from whisper import _download, _MODELS
-        #_download(_MODELS["base"], ".", False)
+        # _download(_MODELS["base"], ".", False)
 
         print("Load Audio file..")
         audio = whisperT.load_audio(audio_filepath)
@@ -133,20 +131,20 @@ class MyService(Service):
 
         with open(jsonpath, 'w') as fp:
             json.dump(result, fp)
-        
 
         print("Define RecursiveCharacterTextSplitter..")
+
         # create the length function
         def tiktoken_len(text):
             tokens = self._tokenizer.tokenize(text)
             return len(tokens)
 
-        #splitting the text into chunks
+        # splitting the text into chunks
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=500,
             chunk_overlap=100,  # number of tokens overlap between chunks
             length_function=tiktoken_len,
-            separators=['\n\n', '\n', '(?<=\. )', '(?<=\, )', ' ', '']
+            separators=[r'\n\n', r'\n', r'(?<=\. )', r'(?<=\, )', r' ', r'']
         )
 
         print("Load JSON file..")
@@ -160,20 +158,20 @@ class MyService(Service):
             chunks = text_splitter.split_text(content["text"])
             for chunk in chunks:
                 documents.append(Document(page_content=chunk, metadata={"source":  audio_filepath,
-                                                                                  "start_time": content["start"],
-                                                                                  "end_time": content["end"]}))
+                                                                        "start_time": content["start"],
+                                                                        "end_time": content["end"]}))
 
         print("Creating Chroma db...")
         vectordb = Chroma.from_documents(documents=documents,
-                                    embedding=self._embedding_model,
-                                    persist_directory=None)
+                                         embedding=self._embedding_model,
+                                         persist_directory=None)
         print(" -> Done")
 
         pipe = pipeline("text-generation", model=self._model, tokenizer=self._tokenizer, max_new_tokens=100)
         HFpipe = HuggingFacePipeline(pipeline=pipe)
 
         print("Creating retriever..")
-        retriever_from_llm=vectordb.as_retriever(search_type="mmr",search_kwargs={'k': 5, 'score_threshold': 0.8})
+        retriever_from_llm = vectordb.as_retriever(search_type="mmr", search_kwargs={'k': 5, 'score_threshold': 0.8})
 
         rag_prompt = hub.pull("rlm/rag-prompt")
 
@@ -250,14 +248,14 @@ async def lifespan(app: FastAPI):
     for engine_url in settings.engine_urls:
         await service_service.graceful_shutdown(my_service, engine_url)
 
-
 # TODO: 6. CHANGE THE API DESCRIPTION AND SUMMARY
 api_summary = """
 Question answering on an audio file.
 """
 
 api_description = """
-Transcribe an audio file with whisper-timestamped, store it into a chromadb vector store and do question-answering with a model from huggingface (Phi-3-mini-4k-instruct).
+Transcribe an audio file with whisper-timestamped, store it into a chromadb vector store and do
+question-answering with a model from huggingface (Phi-3-mini-4k-instruct).
 
 This service has two input files:
  - A text file containing the question to ask the model about the audio content.
