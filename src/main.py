@@ -74,8 +74,8 @@ class MyService(Service):
         )
         self._logger = get_logger(settings)
 
-        local_path = "../models/Phi-3-mini-4k-instruct"
-        local_path_tokenizer = "../models/Phi-3-mini-4k-instruct_tokenizer"
+        # local_path = "../models/Phi-3-mini-4k-instruct"
+        # local_path_tokenizer = "../models/Phi-3-mini-4k-instruct_tokenizer"
 
         emb_name = "BAAI/bge-base-en"
         # emb_name = "BAAI/bge-large-en-v1.5"
@@ -85,11 +85,20 @@ class MyService(Service):
             model_kwargs={"device": "cpu"},
             encode_kwargs={"normalize_embeddings": True},
         )
+        # print("Loading phi3 model..")
+        # self._model = AutoModelForCausalLM.from_pretrained(local_path, local_files_only=True)
+        # print("Loading tokenizer..")
+        # self._tokenizer = AutoTokenizer.from_pretrained(local_path_tokenizer, local_files_only=True)
+        # print(" -> Done")
+
+        MODEL_NAME = "microsoft/Phi-3-mini-4k-instruct"
         print("Loading phi3 model..")
-        self._model = AutoModelForCausalLM.from_pretrained(local_path, local_files_only=True)
+        self._model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
         print("Loading tokenizer..")
-        self._tokenizer = AutoTokenizer.from_pretrained(local_path_tokenizer, local_files_only=True)
+        self._tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         print(" -> Done")
+        # model.save_pretrained(local_path)
+        # tokenizer.save_pretrained(local_path_tokenizer)
 
     # TODO: 5. CHANGE THE PROCESS METHOD (CORE OF THE SERVICE)
     def process(self, data):
